@@ -1,10 +1,6 @@
-#include <iostream>
-#include <fstream>
-#include <cstring>
-#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <cstring>
+#include <string.h>
 #include <pwd.h>
 #include <grp.h>
 #include <time.h>
@@ -14,169 +10,9 @@
 #include <string>
 #include <stdlib.h>
 #include <unistd.h>
-#include <bits/stdc++.h>
 #define MAX 5000
 using namespace std;
-
-void deal_cmd(string[]);
-void HGNB(string[]);
-void history(string[]);
-void ls(string[]);
-
-const int maxFileSize = 10000; //最大注册数目
-int scount = 0;                //当前已注册数目
-
-//用户类
-class User
-{
-private:
-    string username; //账号
-    string password; //密码
-public:
-    User(){};
-    void Signup(); //注册
-    void Login();  //登录
-    void save();   //保存
-    void read();   //读取
-} us;
-User user[maxFileSize];
-//保存
-void User::save()
-{
-    ofstream os;                   //创建流
-    os.open("user.txt", ios::out); //打开文件，文件和流建立关联
-
-    for (int i = 0; i < scount; i++)
-    {
-        os << user[i].username << endl; //向文件中写入(程序输出)一行-用户名
-        os << user[i].password << endl; //向文件中写入(程序输出)一行-密码
-    }
-    os.close();
-}
-
-//读取
-void User::read()
-{
-    ifstream is;                  //创建流
-    is.open("user.txt", ios::in); //打开文件，文件和流建立关联
-
-    scount = 0;
-
-    for (int i = 0; !is.eof(); i++)
-    {
-        is >> user[i].username; //从文件中读出一行-用户名
-        is >> user[i].password; //从文件中读出一行-密码
-        scount++;               //账号数量
-    }
-    is.close();
-}
-
-//注册
-void User::Signup()
-{
-    us.read();  //读取已储存用户数据
-    string usr; //账号
-    while (true)
-    {
-        bool flag = false; //是否注册了不重复的账号
-        printf("请输入你的账号：");
-        cin >> usr;
-        //判断新输入的用户信息是否已存在（如果已存在则重新输入）
-        for (int i = 0; i < scount; i++)
-        {
-            if (usr == user[i].username)
-            {
-                printf("该账号已被注册！请选用其他账号\n");
-                break;
-            }
-            if (i == scount - 1) //未发现有重复账号
-                flag = true;
-        }
-        if (flag)
-            break; //注册了不重复的账号，可以继续注册
-    }
-    user[scount].username = usr;
-    cout << "请输入你的密码：";
-    cin >> user[scount].password;
-    scount++;  //注册成功账号数+1
-    us.save(); // 保存用户信息
-    cout << "注册成功！" << endl;
-}
-
-//登录
-void User::Login()
-{
-    us.read();       //读取已储存用户数据
-    string usr;      //账号
-    string pwd;      //密码
-    int index = 0;   //查找到的账号索引
-    int maxTime = 5; //最多重新输入密码五次
-
-    while (true)
-    {
-        bool flag = false; //是否找到记录中的账号
-        printf("请输入你的账号：");
-        cin >> usr;
-        //判断新输入的用户信息是否已存在（如果不存在则重新输入）
-        for (int i = 0; i < scount; i++)
-        {
-            if (usr == user[i].username)
-            {
-                index = i;
-                flag = true;
-                break;
-            }
-            if (i == scount - 1)
-                cout << "该账号尚未注册！请重新输入账号" << endl;
-        }
-        if (flag)
-            break; //查询到账号，可以继续登录
-    }
-    while (maxTime--)
-    {
-        cout << "请输入你的密码：";
-        cin >> pwd;
-        if (pwd == user[index].password)
-        {
-            cout << "登录成功！" << endl;
-            break;
-        }
-        else
-            cout << "密码不匹配，请重试！" << endl;
-    }
-    if (maxTime == -1)
-    {
-        cout << "密码输入错误次数过多，已自动退出程序" << endl;
-        exit(0);
-    }
-}
-
-void deal_cmd(string cmd[])
-{
-    if (cmd[0] == "repeatHGNB")
-        HGNB(cmd);
-    else if (cmd[0] == "history")
-        history(cmd);
-    else if (cmd[0] == "ls")
-        ls(cmd);
-    else
-    {
-        cout << "Invalid command";
-    }
-}
-
-void history(string cmd[])
-{
-    cout << "坐等豪哥完成";
-}
-
-void HGNB(string cmd[])
-{
-    int times = stoi(cmd[1], 0, 10);
-    for (int i = 0; i < times; ++i)
-        cout << "豪哥牛逼"
-             << " ";
-}
+bool flag = false; // flag == false表示输入的ls, flag == true表示输入的ls -l
 
 typedef struct attribute
 {
@@ -207,6 +43,67 @@ void sort(attribute *info, int index);                     //排序
 void show_ls(attribute *info, int index);                  //输出结构体(简略ls)
 void show_ls_l(attribute *info, int index);                //输出结构体(详细ls -l)
 attribute *create(struct stat buf, struct dirent *dirent); //创建结构体，赋值
+
+int main(int argc, char *argv[])
+{
+    cout << "************物联网1902耿钰清201916070218***************" << endl;
+    cout << "*****************操作系统实验四************************" << endl;
+    while (true)
+    {
+        cout << "请输入 ls 查看目录下简略文件信息 或输入 ls -l 查看详细信息" << endl;
+        cout << "输入其他任意内容退出程序" << endl;
+        string ls;
+        getline(cin, ls);
+        if (ls == "ls")
+            flag = false;
+        else if (ls == "ls -l")
+            flag = true;
+        else
+        {
+            cout << "error，程序自动退出" << endl;
+            return -1;
+        }
+        attribute info[MAX];
+
+        char *a = ".";
+        char *b = "..";
+        char path[10000];
+        strcpy(path, "./"); // 只支持当前路径
+        int count = file_count(path);
+
+        DIR *dir;
+        dir = opendir(path);
+        struct dirent *dirent;
+        int index = 0; // 结构体下标
+        int blocks = 0;
+        for (int i = 0; i < count; i++)
+        {
+            dirent = readdir(dir);
+            struct stat buf = {};
+            if (stat(dirent->d_name, &buf))
+            {
+                perror("stat");
+                return -1;
+            }
+
+            // 跳过特殊情况
+            if (strcmp(dirent->d_name, a) == 0 || strcmp(dirent->d_name, b) == 0)
+                continue;
+            blocks += buf.st_blocks;
+            info[index++] = *create(buf, dirent);
+        }
+        closedir(dir);
+
+        printf("total %d\n", blocks / 2);
+        sort(info, index);
+        if (flag == true)
+            show_ls_l(info, index);
+        else
+            show_ls(info, index);
+        cout << endl;
+    }
+    return 0;
+}
 
 // 输出结构体(详细)
 void show_ls_l(attribute *info, int index)
@@ -422,55 +319,4 @@ attribute *create(struct stat buf, struct dirent *dirent)
     strcpy(info->filename, dirent->d_name);
 
     return info;
-}
-
-void ls(string cmd[])
-{
-    bool flag = false; //标志输入的命令是ls还是ls -l
-    if (cmd[1] == "-l")
-        flag = true;
-    else if (cmd[1] != " ")
-    {
-        cout << "Error: Invalid Option " << cmd[1];
-        return;
-    }
-
-    attribute info[MAX];
-
-    char a[] = ".";
-    char b[] = "..";
-    char path[10000];
-    strcpy(path, "./"); // 只支持当前路径
-    int count = file_count(path);
-
-    DIR *dir;
-    dir = opendir(path);
-    struct dirent *dirent;
-    int index = 0; // 结构体下标
-    int blocks = 0;
-    for (int i = 0; i < count; i++)
-    {
-        dirent = readdir(dir);
-        struct stat buf = {};
-        // if (stat(dirent->d_name, &buf))
-        // {
-        //     perror("stat");
-        //     return -1;
-        // }
-
-        // 跳过特殊情况
-        if (strcmp(dirent->d_name, a) == 0 || strcmp(dirent->d_name, b) == 0)
-            continue;
-        blocks += buf.st_blocks;
-        info[index++] = *create(buf, dirent);
-    }
-    closedir(dir);
-
-    printf("total %d\n", blocks / 2);
-    sort(info, index);
-    if (flag == true)
-        show_ls_l(info, index);
-    else
-        show_ls(info, index);
-    cout << endl;
 }
