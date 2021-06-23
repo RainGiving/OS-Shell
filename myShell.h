@@ -275,21 +275,27 @@ ino_t get_inode_number(char *filename)
 }
 
 //根据inode_number在当前目录查找对应的文件名
-char *find_name_byino(ino_t inode_number)
+char *find_name_byino(ino_t inode)
 {
-    DIR *dp = NULL;
-    struct dirent *dptr = NULL;
-    char *filename = NULL;
-    while (NULL != (dptr = readdir(dp)))
+    char *str;
+    DIR *dirp;
+    struct dirent *dirt;
+    if ((dirp = opendir(".")) == NULL)
     {
-        if (dptr->d_ino == inode_number)
+        perror(".");
+        exit(-1);
+    }
+    while ((dirt = readdir(dirp)) != NULL)
+    {
+        if (dirt->d_ino == inode)
         {
-            filename = strdup(dptr->d_name);
-            break;
+            str = (char *)malloc(strlen(dirt->d_name) * sizeof(char));
+            strcpy(str, dirt->d_name);
+            return str;
         }
     }
-    closedir(dp);
-    return filename;
+    perror(".");
+    exit(-1);
 }
 
 void pwd()
