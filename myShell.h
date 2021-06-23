@@ -21,10 +21,14 @@ using namespace std;
 void deal_cmd(string[]);
 void HGNB(string[]);
 void history(string[]);
+void writeHistory(string[]);
+void historyCheck();
+void cp(string[]);
 // void ls(string[]);
 
 const int maxFileSize = 10000; //最大注册数目
 int scount = 0;                //当前已注册数目
+int history_count = 0;         //历史记录条数
 
 //用户类
 class User
@@ -153,27 +157,87 @@ void User::Login()
 
 void deal_cmd(string cmd[])
 {
-    if (cmd[0] == "repeatHGNB")
+    if (cmd[0] == "repeat")
+    {
         HGNB(cmd);
+        writeHistory(cmd);
+    }
     else if (cmd[0] == "history")
+    {
         history(cmd);
+        writeHistory(cmd);
+    }
     // else if (cmd[0] == "ls")
     //     ls(cmd);
+    else if (cmd[0] == "cp")
+    {
+        cp(cmd);
+        writeHistory(cmd);
+    }
+    else if (cmd[0] == "exit")
+    {
+        cout << "Exit Successfully" << endl;
+        writeHistory(cmd);
+        exit(0); //退出程序
+    }
     else
     {
         cout << "Invalid command";
     }
 }
 
-void history(string cmd[])
-{
-    cout << "坐等豪哥完成";
-}
-
 void HGNB(string cmd[])
 {
-    int times = stoi(cmd[1], 0, 10);
+    int times;
+    if (cmd[1] == " ")
+        times = 10;
+    else
+        times = stoi(cmd[1], 0, 10);
     for (int i = 0; i < times; ++i)
-        cout << "豪哥牛逼"
-             << " ";
+        cout
+            << "豪哥牛逼"
+            << " ";
+}
+
+void history(string cmd[])
+{
+    if (history_count == 0) //无历史记录，则提示并返回
+    {
+        cout << "No history" << endl;
+        return;
+    }
+    ifstream is;                     //创建流
+    is.open("history.txt", ios::in); //打开文件，文件和流建立关联
+    string his[history_count];
+    for (int i = 0; i < history_count; ++i) //一行一行读取历史记录
+        getline(is, his[i]);
+    if (history_count < 10) //如果记录小于等于10条，则全部打印
+        for (int i = 0; i < history_count; ++i)
+            cout << i << "        " << his[i] << endl;
+    else // 如果记录大于10条，则打印最近10条
+        for (int i = history_count - 10; i < history_count; ++i)
+            cout << i << "        " << his[i] << endl;
+    is.close();
+}
+
+void historyCheck() //检查记录中的历史记录条数，更新history_count
+{
+    ifstream is;
+    is.open("history.txt", ios::in);
+    string line;
+    while (getline(is, line))
+        history_count++;
+    is.close();
+}
+
+void writeHistory(string cmd[])
+{
+    FILE *fp;
+    if ((fp = fopen("history.txt", "a+")) < 0) //判断是否成功打开记录文件
+        perror("Error:History file not open");
+    ofstream os;                      //创建流
+    os.open("history.txt", ios::app); //打开文件，文件和流建立关联，app是追加方式
+    os << cmd[0] << " " << cmd[1] << " " << cmd[2] << endl;
+    history_count++;
+    os.close();
 }
