@@ -1,3 +1,4 @@
+//-----------------------------------------------------------头文件-------------------------------------------------
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -15,21 +16,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <bits/stdc++.h>
-#define MAX 5000
 using namespace std;
+//--------------------------------------------------------------------------------------------------------------------
 
-void deal_cmd(string[]);
-void HGNB(string[]);
-void history(string[]);
-void writeHistory(string[]);
-void historyCheck();
-void cp(string[]);
+//---------------------------------------------声明函数和全局变量-------------------------------------------------------
+void deal_cmd(string[]);     //识别命令并跳转至各命令对应的函数
+void HGNB(string[]);         // 重复赞美豪哥
+void history();              // 查看历史命令记录
+void writeHistory(string[]); //每次执行命令后将命令保存至history.txt文件
+void historyCheck();         //每次开始输入命令前检查history.txt里是否有之前的历史命令，更新history_count
+//void cp(string[]);
+void pwd(); //输出当前工作目录的绝对路径
 // void ls(string[]);
 
 const int maxFileSize = 10000; //最大注册数目
+const int maxDirDepth = 256;   // 最大目录深度
 int scount = 0;                //当前已注册数目
 int history_count = 0;         //历史记录条数
 
+//-------------------------------------------------实现登录注册功能------------------------------------------------------
 //用户类
 class User
 {
@@ -155,6 +160,9 @@ void User::Login()
     }
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
+
+//---------------------------------------------------实现识别处理命令cmd，并跳转到各命令函数---------------------------------
 void deal_cmd(string cmd[])
 {
     if (cmd[0] == "repeat")
@@ -164,15 +172,19 @@ void deal_cmd(string cmd[])
     }
     else if (cmd[0] == "history")
     {
-        history(cmd);
+        history();
         writeHistory(cmd);
     }
     // else if (cmd[0] == "ls")
     //     ls(cmd);
     else if (cmd[0] == "cp")
     {
-        cp(cmd);
+        //cp(cmd);
         writeHistory(cmd);
+    }
+    else if (cmd[0] == "pwd")
+    {
+        pwd();
     }
     else if (cmd[0] == "exit")
     {
@@ -186,6 +198,9 @@ void deal_cmd(string cmd[])
     }
 }
 
+//------------------------------------------------------------------------------------------------------------------------
+
+//---------------------------------------------------实现重复赞美豪哥的功能-------------------------------------------------
 void HGNB(string cmd[])
 {
     int times;
@@ -198,8 +213,10 @@ void HGNB(string cmd[])
             << "豪哥牛逼"
             << " ";
 }
+//------------------------------------------------------------------------------------------------------------------------
 
-void history(string cmd[])
+//----------------------------------------------------实现查询历史记录功能--------------------------------------------------
+void history()
 {
     if (history_count == 0) //无历史记录，则提示并返回
     {
@@ -240,4 +257,66 @@ void writeHistory(string cmd[])
     os << cmd[0] << " " << cmd[1] << " " << cmd[2] << endl;
     history_count++;
     os.close();
+}
+//-------------------------------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------输出当前工作目录的绝对路径-------------------------------------------
+
+//根据文件名(.)获取文件的inode_number
+ino_t get_inode_number(char *filename)
+{
+    struct stat st;
+    if (0 != stat(filename, &st))
+    {
+        perror("stat");
+        exit(-1);
+    }
+    return st.st_ino;
+}
+
+//根据inode_number在当前目录查找对应的文件名
+char *find_name_byino(ino_t inode_number)
+{
+    DIR *dp = NULL;
+    struct dirent *dptr = NULL;
+    char *filename = NULL;
+    while (NULL != (dptr = readdir(dp)))
+    {
+        if (dptr->d_ino == inode_number)
+        {
+            filename = strdup(dptr->d_name);
+            break;
+        }
+    }
+    closedir(dp);
+    return filename;
+}
+
+void pwd()
+{
+    char *dir_stack[maxDirDepth]; //记录目录名的栈
+    int current_depth = 0;        //当前目录深度
+    while (true)
+    {
+        ino_t current_ino = get_inode_number("."); //获取当前目录的inode_number
+        ino_t parent_ino = get_inode_number(".."); //获取父目录的inode_number
+
+        if (current_ino == parent_ino) //如果这两个inode_number相等，说明到达了根目录
+            break;
+
+        //未到达根目录,切换至父目录重复过程，并记录当前文件名
+        chdir("..");
+        dir_stack[current_depth++] = find_name_byino(current_ino);
+        if (current_depth >= maxDirDepth) //路径过深
+        {
+            cout << "Error: Directory tree is too deep." << endl;
+            return;
+        }
+    }
+
+    //输出完整路径名
+    for (int i = current_depth - 1; i >= 0; i--)
+    {
+        cout << "/" << dir_stack[i];
+    }
 }
