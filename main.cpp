@@ -12,7 +12,7 @@ int main()
     else
         user.Signup();
 
-    getchar(); //吸收最后一个换行符，避免被下面的getline读取
+    getchar(); //吸收最后一个换行符
 
     //命令选择、执行部分
     while (true)
