@@ -1,8 +1,4 @@
-exit    
-history    
-history    
-repeat    
-repeat 3  
-repeat 2  
-history    
-history    
+
+cp user.txt user1.txt
+cp main main
+cp the_ls.cpp  

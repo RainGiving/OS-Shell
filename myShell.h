@@ -25,9 +25,22 @@ void HGNB(string[]);         // 重复赞美豪哥
 void history();              // 查看历史命令记录
 void writeHistory(string[]); //每次执行命令后将命令保存至history.txt文件
 void historyCheck();         //每次开始输入命令前检查history.txt里是否有之前的历史命令，更新history_count
-//void cp(string[]);
+void cp(string[]);
 void pwd(); //输出当前工作目录的绝对路径
 // void ls(string[]);
+void cat(string[]);
+void cal();
+void　
+    //----------------------------------------------------------------------
+    int
+    is_leap_year(int year);
+int days_of_year(int year);
+int days_of_year_month(int year, int month);
+int week_of_year_month_day(int year, int month, int day);
+void print_cal_year_month(int year, int month);
+int check_valid_year(char *year);
+int check_valid_month(char *month);
+//-------------------------------------------------------------------------
 
 const int maxFileSize = 10000; //最大注册数目
 const int maxDirDepth = 256;   // 最大目录深度
@@ -170,6 +183,7 @@ void deal_cmd(string cmd[])
         HGNB(cmd);
         writeHistory(cmd);
     }
+
     else if (cmd[0] == "history")
     {
         history();
@@ -179,18 +193,27 @@ void deal_cmd(string cmd[])
     //     ls(cmd);
     else if (cmd[0] == "cp")
     {
-        //cp(cmd);
+        cp(cmd);
         writeHistory(cmd);
     }
     else if (cmd[0] == "pwd")
     {
         pwd();
+        writeHistory(cmd);
     }
     else if (cmd[0] == "exit")
     {
         cout << "Exit Successfully" << endl;
         writeHistory(cmd);
         exit(0); //退出程序
+    }
+    else if (cmd[0] == "cat")
+    {
+        cat(cmd);
+    }
+    else if (cmd[0] == "cal")
+    {
+        cal();
     }
     else
     {
@@ -228,7 +251,7 @@ void history()
     string his[history_count];
     for (int i = 0; i < history_count; ++i) //一行一行读取历史记录
         getline(is, his[i]);
-    if (history_count < 10) //如果记录小于等于10条，则全部打印
+    if (history_count <= 10) //如果记录小于等于10条，则全部打印
         for (int i = 0; i < history_count; ++i)
             cout << i << "        " << his[i] << endl;
     else // 如果记录大于10条，则打印最近10条
@@ -325,4 +348,302 @@ void pwd()
     {
         cout << "/" << dir_stack[i];
     }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------
+
+//-------------------------------------------复制文件功能-lwd----------------------------------------------------------------------
+void cp(string cmd[])
+{
+    FILE *fr, *fw;
+    char ch;
+    if (cmd[1] == " " || cmd[2] == " ")
+    {
+        cout << "Error：请输入完整文件名";
+    }
+    const char *cmd1 = cmd[1].c_str();
+    const char *cmd2 = cmd[2].c_str();
+    fr = fopen(cmd1, "r");
+    if (fr == NULL)
+    {
+        printf("Error：打不开文件");
+        return;
+    }
+    fw = fopen(cmd2, "w");
+    if (fw == NULL)
+    {
+        printf("Error：打不开文件");
+        return;
+    }
+    ch = fgetc(fr);
+
+    while (!feof(fr))
+    {
+        fputc(ch, fw);
+        ch = fgetc(fr);
+    }
+    fclose(fr);
+    fclose(fw);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------cat显示文件内容-qbj---------------------------------------------------------------
+
+void cat(string cmd[])
+{
+    const char *cmd1 = cmd[1].c_str();
+    FILE *fa = fopen(cmd1, "r");
+    if (fa == NULL)
+        perror("fopen err:\n");
+    char *buf = (char *)malloc(100);
+    while (fgets(buf, 100, fa) != NULL)
+    {
+        printf("%s", buf);
+        memset(buf, 0, 100);
+    }
+    free(buf);
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------------
+
+//-----------------------------------------cal显示日历-qbj----------------------------------------------------------------------------
+void cal()
+{
+    time_t now;         //实例化time_t结构
+    struct tm *timenow; //实例化tm结构指针
+    time(&now);
+    //time函数读取现在的时间(国际标准时间非北京时间)，然后传值给now
+    timenow = localtime(&now);
+    int year = timenow->tm_year + 1900;
+    int month = timenow->tm_mon + 1;
+    print_cal_year_month(year, month);
+}
+
+// judge a year is leap year
+int is_leap_year(int year)
+{
+    if (year < 0)
+        return -1;
+    if (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0))
+        return 1;
+    return 0;
+}
+
+// how many days of a year
+int days_of_year(int year)
+{
+    if (year < 0)
+        return -1;
+    if (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0))
+        return 366;
+    return 365;
+}
+
+// how many days of a certain month, year
+int days_of_year_month(int year, int month)
+{
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        return 30;
+    else if (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12)
+        return 31;
+    else if (((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0)) // 闰年2月29天
+        return 29;
+    return 28;
+}
+
+/*
+week of day-month-year, from week 1-7
+
+基姆拉尔森计算公式
+W = (d + 2 * m + 3 * (m + 1) / 5 + y + y / 4 - y / 100 + y / 400) % 7, 其中y是年，m是月，d是日，
+有两点要注意：当m是一月或2月时，算作上一年的13月或14月，例如：2013 - 1 - 1应记作2012 - 13 - 1
+此公式算出来的星期从0开始
+*/
+int week_of_year_month_day(int y, int m, int d)
+{
+
+    if (m == 1 || m == 2)
+    {
+        m += 12;
+        y--;
+    }
+    int week = (d + 2 * m + 3 * (m + 1) / 5 + y + y / 4 - y / 100 + y / 400) % 7;
+    return week + 1;
+}
+
+void print_cal_year_month(int year, int month)
+{
+    time_t now;         //实例化time_t结构
+    struct tm *timenow; //实例化tm结构指针
+    time(&now);
+    //time函数读取现在的时间(国际标准时间非北京时间)，然后传值给now
+    timenow = localtime(&now);
+    int now_year = timenow->tm_year + 1900;
+    int now_month = timenow->tm_mon + 1;
+    int now_day = timenow->tm_mday;
+
+    // 居中显示 月份 和 年
+    char monthen[][100] = {
+        "",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    };
+
+    char s[100];
+    sprintf(s, "%s %d", monthen[month], year);
+    int blackAdd = (7 * 3 + 2 - (int)strlen(s)) / 2;
+    while (blackAdd--)
+        printf(" ");
+    printf("%s\n", s);
+
+    // 显示这个月的日历
+    int i, j;
+    char weeks[][3] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
+    for (j = 0; j <= 6; j++)
+    {
+        if (j == 6)
+            printf("%s\n", weeks[j]);
+        else
+            printf("%s ", weeks[j]);
+    }
+
+    int days = days_of_year_month(year, month);        //
+    int week = week_of_year_month_day(year, month, 1); //
+
+    int blankNum = 0;
+    if (week == 7)
+        blankNum = 0;
+    else
+    {
+        blankNum = week;
+    }
+
+    for (i = 0; i < blankNum; i++)
+        printf("   "); // 3个空格
+
+    for (i = 1; i <= days; i++)
+    {
+        if (i == days)
+        {
+            if (year == now_year && month == now_month && now_day == i)
+                printf("\033[47;30m%2d\n\033[0m", i);
+            else
+                printf("%2d\n", i);
+            break;
+        }
+        blankNum++;
+        if (blankNum < 7)
+            if (year == now_year && month == now_month && now_day == i)
+                printf("\033[47;30m%2d \033[0m", i);
+            else
+                printf("%2d ", i);
+        else
+        {
+            if (year == now_year && month == now_month && now_day == i)
+                printf("\033[47;30m%2d\n\033[0m", i);
+            else
+                printf("%2d\n", i);
+            blankNum = 0;
+        }
+    }
+}
+
+// check a string year is "1" to "9999"
+int check_valid_year(char *year)
+{
+    int i;
+    int len = strlen(year);
+    for (i = 0; i < len; i++)
+    {
+        if (!(year[i] >= '0' && year[i] <= '9'))
+            return -1;
+    }
+    int y = atoi(year);
+    if (y >= 1 && y <= 9999)
+        return y;
+    return -2;
+}
+
+// check a string month is "1" to "12"
+int check_valid_month(char *month)
+{
+    int i;
+    int len = strlen(month);
+    int y = atoi(month);
+    if (y >= 1 && y <= 12)
+        return y;
+
+    if (len < 3)
+        return -1;
+
+    char s[4];
+    for (i = 0; i < 3; i++)
+    {
+        if (isalpha(month[i]))
+        {
+            if (i == 0)
+                s[i] = toupper(month[i]);
+            else
+                s[i] = tolower(month[i]);
+        }
+        else
+        {
+            return -2;
+        }
+    }
+    s[3] = '\0';
+    char monthen[][100] = {
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    };
+    for (i = 0; i < 12; i++)
+    {
+        if ((int)strcmp(s, monthen[i]) == 0)
+            return i + 1;
+    }
+    return -2;
+}
+
+//--------------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------date显示当前日期-----------------------------------------------------------------
+void date()
+{
+    time_t now;
+    struct tm *t;
+    char *wd[7] = {
+        "星期日",
+        "星期一",
+        "星期二",
+        "星期三",
+        "星期四",
+        "星期五",
+        "星期六",
+    };
+
+    time(&now);
+    t = localtime(&now);
+    printf("%d年  %d月  %d日 %s UTC", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, wd[t->tm_wday]);
+    printf("%d:%d:%d\n", t->tm_hour, t->tm_min, t->tm_sec);
 }
