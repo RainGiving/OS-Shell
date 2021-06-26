@@ -47,16 +47,19 @@ const int maxFileSize = 10000; //最大注册数目
 const int maxDirDepth = 256;   // 最大目录深度
 int scount = 0;                //当前已注册数目
 int history_count = 0;         //历史记录条数
+
 //--------------------------------------------PS相关声明-------------------------------
+
 #define MAX_LEN 20
 struct ps_info *trav_dir(char dir[]);
 int read_info(char d_name[], struct ps_info *p1);
 void print_ps(struct ps_info *head);
 int is_num(char *);
 void uid_to_name(uid_t uid, struct ps_info *p1);
-void ps_ps();
-void ps_aux();
-void ps_axjf();
+void ps(string cmd[]);
+void ps_ps(struct ps_info *head);
+void ps_aux(struct ps_info *head);
+void ps_axjf(struct ps_info *head);
 
 typedef struct ps_info
 {
@@ -256,7 +259,7 @@ void deal_cmd(string cmd[])
     }
     else if (cmd[0] == "ps")
     {
-        ps_ps();
+        ps(cmd);
         writeHistory(cmd);
     }
     else
@@ -778,32 +781,75 @@ void mv(string cmd[])
 //------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------PS进程相关功能-----------------------------------------------------------------
-void ps_ps()
+
+void ps(string cmd[])
 {
-    mps *head, *link;
-    char *temp = (char *)"/proc/";
-    head = trav_dir(temp);
+    mps *head;
+    head = trav_dir((char *)"/proc/");
     if (head == NULL)
         printf("traverse dir error\n");
+    if (cmd[1] == " ")
+        ps_ps(head); //如果cmd[1] = ''调用，ps_ps()方法
+    else if (cmd[1] == "-aux")
+        ps_aux(head); //如果cmd[1] ='aux'，调用ps_aux()方法
+    else if (cmd[1] == "-axjf")
+        ps_axjf(head); //如果cmd[1] = 'axjf'，调用  ps_axjf()方法，还未实现
+    else
+        cout << "Error：error: unknown user-defined format specifier " << cmd[1];
+}
+
+void ps_ps(struct ps_info *head)
+{
+    mps *link;
+
     print_ps(head);
 
     while (head != NULL)
     {
         link = head;
         head = head->next;
-        free(link);
     }
     return;
 }
-void ps_aux()
+void ps_aux(struct ps_info *head)
 {
-    return;
-}
-void ps_axjf()
-{
-    return;
-}
+    int length;
+    mps *list1 = NULL;
+    list1 = head;
+    mps *arr[1001];
 
+    int i = 0, j = 0;
+    mps *temp = NULL;
+
+    for (; list1 != NULL; list1 = list1->next, i++)
+    {
+        arr[i] = list1;
+    }
+    length = i;
+    for (i = 0; i < length - 1; i++)
+    {
+        for (j = 0; j < length - 1 - i; j++)
+        {
+            if ((arr[j]->ppid) > (arr[j + 1]->ppid))
+            {
+                temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+    printf("USER\t\t\t\tPID\t\tPPID\t\tSTATE\t\tPNAME\n");
+    for (i = 0; i < length; i++)
+    {
+        printf("%-16s\t\t%d\t\t%d\t\t%c\t\t%s\n", arr[i]->user, arr[i]->pid, arr[i]->ppid, arr[i]->state, arr[i]->pname);
+    }
+
+    return;
+}
+void ps_axjf(struct ps_info *head)
+{
+    return;
+}
 mps *trav_dir(char dir[])
 {
     DIR *dir_ptr;
