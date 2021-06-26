@@ -1,4 +1,10 @@
-
 cp user.txt user1.txt
 cp main main
 cp the_ls.cpp  
+exit    
+pwd    
+pwd    
+pwd    
+pwd    
+pwd    
+pwd    

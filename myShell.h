@@ -25,15 +25,15 @@ void HGNB(string[]);         // 重复赞美豪哥
 void history();              // 查看历史命令记录
 void writeHistory(string[]); //每次执行命令后将命令保存至history.txt文件
 void historyCheck();         //每次开始输入命令前检查history.txt里是否有之前的历史命令，更新history_count
-void cp(string[]);
-void pwd(); //输出当前工作目录的绝对路径
+void cp(string[]);           //复制文件1到文件2
+void pwd();                 //输出当前工作目录的绝对路径
 // void ls(string[]);
-void cat(string[]);
-void cal();
-void　
-    //----------------------------------------------------------------------
-    int
-    is_leap_year(int year);
+void cat(string[]);         //显示文件内容
+void cal();                 //显示日历
+void date();                //显示当前日期时间
+void mv(string[]);          //将文件移动到zhi
+//-------------------------------------------------------------------------
+int is_leap_year(int year);
 int days_of_year(int year);
 int days_of_year_month(int year, int month);
 int week_of_year_month_day(int year, int month, int day);
@@ -215,6 +215,14 @@ void deal_cmd(string cmd[])
     {
         cal();
     }
+    else if (cmd[0] == "date")
+    {
+        date();
+    }
+    else if (cmd[0] == "mv")
+    {
+        mv(cmd);
+    }
     else
     {
         cout << "Invalid command";
@@ -327,8 +335,10 @@ void pwd()
     int current_depth = 0;        //当前目录深度
     while (true)
     {
-        ino_t current_ino = get_inode_number("."); //获取当前目录的inode_number
-        ino_t parent_ino = get_inode_number(".."); //获取父目录的inode_number
+        char *current = (char *)".";
+        char *parent = (char *)"..";
+        ino_t current_ino = get_inode_number(current); //获取当前目录的inode_number
+        ino_t parent_ino = get_inode_number(parent);   //获取父目录的inode_number
 
         if (current_ino == parent_ino) //如果这两个inode_number相等，说明到达了根目录
             break;
@@ -343,11 +353,15 @@ void pwd()
         }
     }
 
-    //输出完整路径名
+    //得到完整路径名
+    string current_path;
     for (int i = current_depth - 1; i >= 0; i--)
     {
         cout << "/" << dir_stack[i];
+        current_path = current_path + "/" + dir_stack[i];
     }
+    const char *current_path_str = current_path.c_str();
+    chdir(current_path_str); // 最后再把工作目录切换回当前目录，便于下次调用pwd
 }
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -632,7 +646,7 @@ void date()
 {
     time_t now;
     struct tm *t;
-    char *wd[7] = {
+    const char *wd[7] = {
         "星期日",
         "星期一",
         "星期二",
@@ -644,6 +658,73 @@ void date()
 
     time(&now);
     t = localtime(&now);
-    printf("%d年  %d月  %d日 %s UTC", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, wd[t->tm_wday]);
-    printf("%d:%d:%d\n", t->tm_hour, t->tm_min, t->tm_sec);
+    printf("%d年  %d月  %d日 %s ", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, wd[t->tm_wday]);
+    printf("%d:%d:%d UTC", t->tm_hour, t->tm_min, t->tm_sec);
+}
+//------------------------------------------------------------------------------------------------------------
+
+//-----------------------------------mv移动文件-----------------------------------------------------------
+void mv(string cmd[])
+{
+    char *cmd1, *cmd2;
+    strncpy(cmd1, cmd[1].c_str(), cmd[1].length());
+    strncpy(cmd2, cmd[2].c_str(), cmd[2].length());
+    FILE *source = fopen(cmd1, "r");
+    if (source == NULL)
+    {
+        perror("file no exsit!\n");
+        return;
+    }
+    else
+    {
+        struct stat *statbuf = (struct stat *)malloc(sizeof(statbuf));
+        stat(cmd2, statbuf);           //判断目标路径是一个普通文件还是一个目录
+        if (S_ISDIR(statbuf->st_mode)) //目标是个目录
+        {
+            int i, j, k = 0;
+            //因为目标路径是一个目录，所以默认拷贝一个和源文件名字一样的名字
+            //要找到源文件的名字，就要找源路径最后一个'/'后面的字符串就是源文件名！！
+            for (i = strlen(cmd1) - 1; i >= 0; i--)
+            {
+                if (cmd1[i] == '/') //找到了最后一个'/'的下标
+                {
+                    break; //找到就退出 ，保留'/'下标为i
+                }
+            }
+            char source_file_name[128] = {}; //用来存储源文件的名字
+            for (j = i + 1; j < strlen(cmd1); j++)
+            { //把源路径最后一个'/'后面的字符串给source_file_name,它就是源文件名字
+                source_file_name[k++] = cmd1[j];
+            }
+            char *cmd22;
+
+            //如果目标路径最后面没有‘/’，则需要加一个'/'
+            if (cmd2[strlen(cmd2) - 1] != '/')
+            {
+                strcat(cmd2, "/");
+            }
+            //把目标路径和源文件名拼接起来，成为一个目标文件名，并创建打开它
+            FILE *target = fopen(strcat(cmd2, source_file_name), "w+");
+            while (!feof(source))
+            { //把源文件内容全部传给目标文件
+                char buf[10] = {};
+                fread(buf, 1, 10, source);
+                fwrite(buf, 1, 10, target);
+            }
+            fclose(target);
+        }
+        else //目标路径是个文件
+        {
+            FILE *target = fopen(cmd2, "w+");
+            while (!feof(source))
+            { //把源文件内容全部传给目标文件
+                char buf[10] = {};
+                fread(buf, 1, 10, source);
+                fwrite(buf, 1, 10, target);
+            }
+            fclose(target);
+        }
+    }
+    remove(cmd1); //删除源文件
+    fclose(source);
 }
