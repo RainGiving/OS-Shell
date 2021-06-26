@@ -1,10 +1,29 @@
-cp user.txt user1.txt
-cp main main
-cp the_ls.cpp  
+pwd    
+pwd    
+cat history.txt  
+cp main main1
+history    
+cal    
+date    
+cat history.txt  
+cat history.txt  
+history    
+cat history.txt  
+history    
+cal    
+pwd    
+history    
+cat history  
+cat test  
+cat test  
+history    
 exit    
+history    
+exit    
+history    
+!!    
+!!    
 pwd    
-pwd    
-pwd    
-pwd    
-pwd    
-pwd    
+!!    
+exit    
+exit    

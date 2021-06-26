@@ -13,7 +13,7 @@ int main()
     //     user.Signup();
 
     // getchar(); //吸收最后一个换行符
-    // historyCheck();
+    historyCheck(); //检查history.txt中已有多少命令记录
     //命令选择、执行部分
     while (true)
     {
