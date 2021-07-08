@@ -1,29 +1,70 @@
+help    
+whoami    
 pwd    
-pwd    
-cat history.txt  
-cp main main1
-history    
 cal    
 date    
-cat history.txt  
-cat history.txt  
+date  
+cal  
 history    
-cat history.txt  
-history    
+top    
+cp user.txt otheruser.txt
+rm otheruser.txt  
+rmdir testmk  
+mv fork.cpp testpk
+file main.cpp  
+mkdir testmk  
+rmdir testmk  
+pwd    
+ls    
+ls -l  
+mkdir testmk  
+cat main.cpp  
+help    
+whoami    
+cat main.cpp  
 cal    
+date    
+date  
+cal  
+history    
+top    
+cp user.txt otheruser.txt
+rmdir testmk  
+mv fork.cpp testpk
+file main.cpp  
+help    
+whoami    
+cat main.cpp  
+cal    
+date    
+date  
+cal  
+history    
+top    
+cp user.txt otheruser.txt
+rm otheruser.txt  
+rmdir testmk  
+mv fork.cpp testpk
+file main.cpp  
+ls    
+ls -l  
+mkdir testmk  
 pwd    
+help    
+whoami    
+cat main.cpp  
+cal    
+date    
+date  
+cal  
 history    
-cat history  
-cat test  
-cat test  
-history    
-exit    
-history    
-exit    
-history    
-!!    
-!!    
+top    
+cp user.txt otheruser.txt
+rm otheruser.txt  
+rmdir testmk  
+mv fork.cpp testpk
+file main.cpp  
+ls    
+ls -l  
+mkdir testk  
 pwd    
-!!    
-exit    
-exit    
